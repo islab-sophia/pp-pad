@@ -1,0 +1,24 @@
+padding_mode: 'partial' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
+
+# path
+dataset: './dataset/VOCdevkit/VOC2012/'
+pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
+#pretrain: ['VOC', './weights/pspnet50_160_main_jikken_to_0pad_r0.pth'] for pp-pad, partial as pretrain model with 0 padding
+#pretrain: ['VOC', './outputs/sample/pspnet_cap_pretrain_4.pth'] # for cap_train. weight file by cap_pretrain
+outputs: './outputs/sample/'
+
+# training parameters
+num_epochs: 4 #160
+val_output_interval: 2 #5
+batch_size: 6
+batch_multiplier: 4
+optimizer: 'sgd' # 'adam' for cap_train, 'sgd' for others
+# Reference range for pp-pad is specified in pspnet.py: REF_PPPAD
+
+# image sizes
+input_size: 475 # 512 for CAP, 475 for others
+expanded_size: 1050 # input image is first expanded to expanded_size, and then crop the image in input_size.
+
+# dataset info
+color_mean: [0.485, 0.456, 0.406]
+color_std: [0.229, 0.224, 0.225]
