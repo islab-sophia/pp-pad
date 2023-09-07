@@ -2,6 +2,7 @@ import argparse
 import yaml
 from PIL import Image
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import tqdm
@@ -12,19 +13,22 @@ import torchvision.utils
 from utils.dataloader import make_datapath_list, DataTransform
 from models.pspnet import PSPNet
 
+DATASET_NCLASS = 21 # VOC: 21
+DISR_TH = 0 # threshold for disR (dissimilarity among prediction results over patches)
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str, default='config/cfg_sample_segment.yaml', help='config file')
     return parser
 
-def calc_iou(cfg):
+def segment_val(cfg):
     
     #----- Dataset ------#
     rootpath = cfg['dataset']
     train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(rootpath=rootpath)
     
     #----- Network Model ------#
-    net = PSPNet(n_classes=21, padding_mode=cfg['padding_mode'])
+    net = PSPNet(n_classes=DATASET_NCLASS, padding_mode=cfg['padding_mode'])
     [dataset_name, weights_file_path] = cfg['weights']
     state_dict = torch.load(weights_file_path, map_location={'cuda:0': 'cpu'})
     net.load_state_dict(state_dict)
@@ -35,11 +39,11 @@ def calc_iou(cfg):
     m_IoU_sum_total = 0
     val_data = np.load(cfg['val_images'])
     expanded_size = cfg['expanded_size']
-    data = []
-    data_summary = []
-    for fid, filename in enumerate(val_data):
-    #for fid, filename in enumerate(val_data[0:3]): #debug
-
+    iou_data = []
+    data_summary = [] #[fid, m_iou, m_iou_weighted, sum_effective_px, meanE, DisR]
+    #for fid, filename in enumerate(val_data):
+    for fid, filename in enumerate(val_data[0:3]): #debug
+        print('---')
         #----- 1. load image & resize ------#
         print('{0}th image:'.format(fid))
         filename = filename.replace('\n','') # remove return code
@@ -76,7 +80,8 @@ def calc_iou(cfg):
         num_py = len(np.arange(0, im_array.shape[0]-ph+1, patch_stride))
         num_px = len(np.arange(0, im_array.shape[1]-pw+1, patch_stride))
         np.set_printoptions(precision=5, suppress=True) #default: precision=8, suppress=False
-        data_img = np.zeros((num_py * num_px, 6)) # [fid, py, px, iou, iou_weighted, sum_set_px]
+        iou_img = np.zeros((num_py * num_px, 6)) # [fid, py, px, iou, iou_weighted, sum_set_px]
+        pred_cnt = np.zeros((im_array.shape[0], im_array.shape[1], DATASET_NCLASS)) # count prediction results of sliding patches
         for py in np.arange(0, im_array.shape[0]-ph+1, patch_stride):
             for px in np.arange(0, im_array.shape[1]-pw+1, patch_stride):
                 im_array_cut  = im_array[py:py+ph, px:px+pw, :] # Crop an image patch with the size of (475, 475, 3), ndarray
@@ -107,10 +112,15 @@ def calc_iou(cfg):
                 
                 y_org = y[0].to('cpu').detach().numpy().copy() #(21, 475, 475)
                 y_org = np.argmax(y_org, axis=0) # (475, 475) same as 'anno_cut'
-                y_org = y_org.reshape(y_org.shape[0], y_org.shape[1], 1)
                 
+                # count up predicted class for each patch pixel
+                for category in range(DATASET_NCLASS):
+                    pred_cnt[py:py+y_org.shape[0], px:px+y_org.shape[1], category][y_org==category] += 1
+                
+                # calculate Intersection over Union (IoU)
+                y_org = y_org.reshape(y_org.shape[0], y_org.shape[1], 1)
                 anno_org = anno_cut.to('cpu').detach().numpy().copy()
-                labels_num = np.arange(21).reshape(1, 1, 21)
+                labels_num = np.arange(DATASET_NCLASS).reshape(1, 1, DATASET_NCLASS)
                 anno_org = anno_org.reshape(anno_org.shape[0], anno_org.shape[1], 1)
 
                 sum_set = np.sum((y_org == labels_num) | (anno_org == labels_num), axis=(0, 1))
@@ -130,38 +140,74 @@ def calc_iou(cfg):
                     iou_weighted = np.average(iou_org, weights=sum_set_non_zero) # weighted average
                     sum_set_px = np.sum(sum_set_non_zero)
 
-                # data_img: [fid, py, px, iou, iou_weighted, sum_set_px]
+                # iou_img: [fid, py, px, iou, iou_weighted, sum_set_px]
                 [yn, xn] = [int(py/patch_stride), int(px/patch_stride)]
                 data_id = yn * num_px + xn
-                data_img[data_id] = [fid, py, px, iou, iou_weighted, sum_set_px]
+                iou_img[data_id] = [fid, py, px, iou, iou_weighted, sum_set_px]
         
-        iou_effective = data_img[:,3][data_img[:,5]>0]
-        iou_weighted_effective = data_img[:,4][data_img[:,5]>0]
-        effective_px = data_img[:, 5][data_img[:, 5]>0]
+        # calculate entropy for evaluating translation invariance
+        # (ph, pw) patch size
+        cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :]
+        p = cnt_cut / np.sum(cnt_cut, axis=2).reshape(cnt_cut.shape[0], cnt_cut.shape[1], 1)
+        nzi = np.where(p!=0) # nzi = (ndarray[points], ndarray[points], ndarray[points])
+        #print(nzi[0].shape)
+        #nz = np.array([nzi[0], nzi[1], nzi[2]]) # nz[:, 0]: index of 1st point
+        ei = np.zeros(p.shape)
+        ei[nzi] = - p[nzi] * np.log2(p[nzi])
+        #ei = (- p * np.log2(p))*(p>0) # ei=0 when p=0, else calculate entropy
+        e = np.sum(ei, axis=2) # sum ei over classes to calculate entory at each pixel
+        meanE = np.mean(e)
+        disR = np.sum(e > DISR_TH) / e.size
+        print('- translation invariance')
+        print('meanE: ' + str(meanE))
+        print('disR: ' + str(disR))
+
+        # calculate Intersection over Union (IoU) to evaluate accuracy
+        iou_effective = iou_img[:,3][iou_img[:,5]>0]
+        iou_weighted_effective = iou_img[:,4][iou_img[:,5]>0]
+        effective_px = iou_img[:, 5][iou_img[:, 5]>0]
         m_iou = np.mean(iou_effective)
         m_iou_weighted = np.average(iou_weighted_effective, weights=effective_px)
         sum_effective_px = np.sum(effective_px)
+        print('- Classification Accuracy')
         print('image id: ' + str(fid))
         print('m_iou: ' + str(m_iou))
         print('m_iou_weightd: ' + str(m_iou_weighted))
         print('effective pixels: ' + str(sum_effective_px))
-        data.append(data_img)
-        data_summary.append(np.array([fid, m_iou, m_iou_weighted, sum_effective_px]).reshape(1, -1))
+        iou_data.append(iou_img)
 
-    data = np.concatenate(data)
+        # data log
+        data_summary.append(np.array([fid, m_iou, m_iou_weighted, sum_effective_px, meanE, disR]).reshape(1, -1))
+
     data_summary = np.concatenate(data_summary)
-    print(data_summary.shape)
-    np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data.csv', data, delimiter=',', fmt='%8.16f')
-    np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv', data_summary, delimiter=',', fmt='%8.16f')
+    idx = ['fid', 'm_iou', 'm_iou_weighted', 'sum_effective_px', 'meanE', 'disR']
+    pd.DataFrame(data=data_summary, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv')
+
+    iou_data = np.concatenate(iou_data)
+    idx = ['fid', 'py', 'px', 'iou', 'iou_weighted', 'sum_set_px']
+    pd.DataFrame(data=iou_data, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'iou_data.csv')
     
+    # np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv', data_summary, delimiter=',', fmt='%8.16f')
+    # np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'iou_data.csv', iou_data, delimiter=',', fmt='%8.16f')
+    
+    # averaged results over all images
     m_iou = np.mean(data_summary[:,1])
     m_iou_weighted = np.average(data_summary[:, 2], weights=data_summary[:, 3])
+    m_meanE = np.mean(data_summary[:, 4])
+    m_disR = np.mean(data_summary[:, 5])
+    out = np.array([
+        'paddingmode: ' + cfg['padding_mode'],
+        'm_meanE: ' + str(m_meanE),
+        'm_disR: ' + str(m_disR),
+        'm_iou for all images: ' + str(m_iou),
+        'm_iou_weightd for all images: ' + str(m_iou_weighted)
+    ])
     print('------------------')
-    print('m_iou for all images: ' + str(m_iou))
-    print('m_iou_weightd for all images: ' + str(m_iou_weighted))
+    for n in range(len(out)): print(out[n])
+    np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'averaged_results.csv', out, fmt="%s")
 
 if __name__ == '__main__':
     args = get_parser().parse_args()
     with open(args.cfg, 'r') as f:
         cfg = yaml.safe_load(f)
-    calc_iou(cfg)
+    segment_val(cfg)
