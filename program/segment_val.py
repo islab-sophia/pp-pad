@@ -56,14 +56,14 @@ def calc_iou(cfg):
         else:
             img = img.resize((expanded_size, int((expanded_size/img_width) * img_height)))
         im_array = np.asarray(img)
-        #plt.imsave(filename + '.jpg', im_array) # to confirm the image
+        #plt.imsave(samples/filename + '.jpg', im_array) # to confirm the image
 
         if anno_width > anno_height:
             anno = anno.resize(((int((expanded_size/anno_height) * anno_width), expanded_size)), Image.NEAREST)
         else:
             anno = anno.resize(((expanded_size ,int((expanded_size/anno_width) * anno_height))), Image.NEAREST)
         anno_array = np.asarray(anno)
-        #plt.imsave(filename + '.png', anno_array) # to confirm the image
+        #plt.imsave(samples/filename + '.png', anno_array) # to confirm the image
         
         #----- 2. Instance of Preprocessing Class ------#
         transform = DataTransform(input_size=475, color_mean=cfg['color_mean'], color_std=cfg['color_std'])
@@ -85,8 +85,8 @@ def calc_iou(cfg):
                 #----- 3. Preprocessing ------#
                 phase = "val"
                 im_cut = Image.fromarray(np.uint8(im_array_cut))
-                # im_cut.save(filename + '_patch.jpg') # to confirm the image
-                # anno_cut.save(filename + '_patch.png') # to confirm the image
+                # im_cut.save(samples/filename + '_patch.jpg') # to confirm the image
+                # anno_cut.save(samples/filename + '_patch.png') # to confirm the image
                 im_cut, anno_cut = transform(phase, im_cut, anno_cut)
                 
                 # # to confirm the image
@@ -94,10 +94,10 @@ def calc_iou(cfg):
                 # anno_cut_path_array = anno_cut.to('cpu').detach().numpy()
                 # im_tmp = im_cut_path_array - np.min(im_cut_path_array)
                 # im_tmp = im_tmp / np.max(im_tmp)
-                # plt.imsave(filename + '_patch.jpg', im_tmp) # to confirm the image
+                # plt.imsave(samples/filename + '_patch.jpg', im_tmp) # to confirm the image
                 # im_tmp = anno_cut_path_array - np.min(anno_cut_path_array)
                 # im_tmp = im_tmp / np.max(im_tmp)
-                # plt.imsave(filename + '_patch.png', im_tmp) # to confirm the image
+                # plt.imsave(samples/filename + '_patch.png', im_tmp) # to confirm the image
             
                 #----- 4. Inference with PSPNet ------#
                 net.eval()
