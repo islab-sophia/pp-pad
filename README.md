@@ -24,7 +24,7 @@ The yaml file can be modified in a text editor.
 sample config file: program/config/cfg_sample.yaml
 
 [padding mode]
-- padding_mode: select from 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
+- padding_mode: select from 'pp-pad', 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', or 'cap_train'. For 'cap_pretrain' and 'cap_train', use them in this order, since pretrain is required in CAP.
 
 [path for PSPNet.py]
 - dataset: dataset folder
@@ -36,20 +36,20 @@ sample config file: program/config/cfg_sample.yaml
 - val_output_interval: interval for validation [epochs]
 - batch_size
 - batch_multiplier: weights are updated every batch_multiplier, which means the effective batch size is batch_size x batch_multiplier
-- optimizer
+- optimizer: sgd or adam
 
 [path for segment_val.py]
-- val_iamges: filepath for evaluation of translation invariance and classification accuracy (only 100 images were used for evaluation due to the computational cost)
+- val_images: validation file list for evaluation of translation invariance and classification accuracy (only 100 images were used for evaluation due to the computational cost)
 - weights: network model for evaluation
 
 [image sizes]
 - input_size: patch size extracted from original image in training and evaluation
-- expanded_size: original image was resized into expanded_size in the long side, and then croped in the input_size specified above.
-- patch_stride: stride of sliding window in evaluation
+- expanded_size: original image was first resized into expanded_size in the long side, and then croped in the input_size specified above.
+- patch_stride: stride of sliding window in evaluation creating overlapping patches
 
 [dataset info]
-- color_mean: mean value of images in the dataset
-- color_std: standard deviation of images in the dataset
+- color_mean: mean values of images in the dataset
+- color_std: standard deviations of images in the dataset
 
 # References
 1. Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," ICIP2023. https://arxiv.org/abs/2307.07725
