@@ -60,11 +60,11 @@ The values in the following results were difference from the original ICIP2023 p
 
 | | Methods | mIoU &uarr; | meanE &darr;| disR &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| | Zero | 0.3234 | 0.4786 | 0.6151 |
+| Conventional | Zero | 0.3234 | 0.4786 | 0.6151 |
 | | Reflect |
 | | Replicate |
 | | Circular |
-|Previous | CAP [19] |
+| Previous | CAP [19] |
 | | Partial [17] |
 | Proposed | PP-Pad (2x3) |
 | | PP-Pad (3x3) |
@@ -73,16 +73,16 @@ The values in the following results were difference from the original ICIP2023 p
 
 [Weighted average IOU, meanE & disR excluding background class]
 
-- Weighted average version of mIoU
+- Weighted average version of mIoU. The background class was excluded in the calculation of IoU.
 - meanE & disR excluding the background class
 
 | | Methods | mIoU &uarr; | meanE &darr; | disR &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| | Zero | 0.4295 | 0.6012 | 0.7515 |
+| Conventional | Zero | 0.4295 | 0.6012 | 0.7515 |
 | | Reflect |
 | | Replicate |
 | | Circular |
-|Previous | CAP [19] |
+| Previous | CAP [19] |
 | | Partial [17] |
 | Proposed | PP-Pad (2x3) |
 | | PP-Pad (3x3) |
