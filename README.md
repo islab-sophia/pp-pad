@@ -58,7 +58,7 @@ The values in the following results were difference from the original ICIP2023 p
 - mIoU is simple mean, but not weighted average. The background class was excluded in the calculation of IoU.
 - meanE and disR were calculated including background class.
 
-| | Methods | mIoU &uarr; | meanE &darr;| disR &darr; |
+| | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
 | ---- | ---- | ---- | ---- | ---- |
 | Conventional | Zero | 0.3234 | 0.4786 | 0.6151 |
 | | Reflect |
@@ -76,7 +76,7 @@ The values in the following results were difference from the original ICIP2023 p
 - Weighted average version of mIoU.
 - meanE & disR excluding the background class
 
-| | Methods | mIoU &uarr; | meanE &darr; | disR &darr; |
+| | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
 | Conventional | Zero | 0.4295 | 0.6012 | 0.7515 |
 | | Reflect |
