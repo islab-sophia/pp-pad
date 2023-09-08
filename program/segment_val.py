@@ -219,7 +219,7 @@ def segment_val(cfg):
         data_summary.append(np.array([fid, m_iou, m_iou_weighted, sum_effective_px, meanE_in, disR_in, meanE_ex, disR_ex]).reshape(1, -1))
 
     data_summary = np.concatenate(data_summary)
-    idx = ['fid', 'm_iou', 'm_iou_weighted', 'sum_effective_px', 'meanE', 'disR', 'meanE_ex', 'disR_ex']
+    idx = ['fid', 'm_iou', 'm_iou_weighted', 'sum_effective_px', 'meanE_in', 'disR_in', 'meanE_ex', 'disR_ex']
     pd.DataFrame(data=data_summary, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv')
 
     iou_data = np.concatenate(iou_data)

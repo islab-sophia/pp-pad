@@ -51,6 +51,44 @@ sample config file: program/config/cfg_sample.yaml
 - color_mean: mean values of images in the dataset
 - color_std: standard deviations of images in the dataset
 
+# Results
+The values in the following results were difference from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code.
+
+[Simple mean IOU, meanE & disR including background class]
+- mIoU is simple mean, but not weighted average.
+- meanE and disR were calculated including background class.
+
+| | Methods | mIoU &uarr; | meanE &darr;| disR &darr; |
+| ---- | ---- | ---- | ---- | ---- |
+| | Zero | 0.3234 | 0.4786 | 0.6151 |
+| | Reflect |
+| | Replicate |
+| | Circular |
+|Previous | CAP [19] |
+| | Partial [17] |
+| Proposed | PP-Pad (2x3) |
+| | PP-Pad (3x3) |
+| | PP-Pad (5x3) |
+| | PP-Pad (10x3) |
+
+[Weighted average IOU, meanE & disR excluding background class]
+
+- Weighted average version of mIoU
+- meanE & disR excluding the background class
+
+| | Methods | mIoU &uarr; | meanE &darr; | disR &darr; |
+| ---- | ---- | ---- | ---- | ---- |
+| | Zero | 0.4295 | 0.6012 | 0.7515 |
+| | Reflect |
+| | Replicate |
+| | Circular |
+|Previous | CAP [19] |
+| | Partial [17] |
+| Proposed | PP-Pad (2x3) |
+| | PP-Pad (3x3) |
+| | PP-Pad (5x3) |
+| | PP-Pad (10x3) |
+
 # References
 1. Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," ICIP2023. https://arxiv.org/abs/2307.07725
 2. Hengshuang Zhao, Jianping Shi, Xiaojuan Qi, Xiaogang Wang, and Jiaya Jia, "Pyramid Scene Parsing Network," CVPR2017. https://arxiv.org/abs/1612.01105
