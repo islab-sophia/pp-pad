@@ -55,7 +55,7 @@ sample config file: program/config/cfg_sample.yaml
 The values in the following results were difference from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code.
 
 [Simple mean IOU, meanE & disR including background class]
-- mIoU is simple mean, but not weighted average.
+- mIoU is simple mean, but not weighted average. The background class was excluded in the calculation of IoU.
 - meanE and disR were calculated including background class.
 
 | | Methods | mIoU &uarr; | meanE &darr;| disR &darr; |
@@ -73,7 +73,7 @@ The values in the following results were difference from the original ICIP2023 p
 
 [Weighted average IOU, meanE & disR excluding background class]
 
-- Weighted average version of mIoU. The background class was excluded in the calculation of IoU.
+- Weighted average version of mIoU.
 - meanE & disR excluding the background class
 
 | | Methods | mIoU &uarr; | meanE &darr; | disR &darr; |
