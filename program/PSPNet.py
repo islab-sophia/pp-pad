@@ -10,7 +10,7 @@ import yaml
 import torch
 import torch.utils.data as data
 import torch.nn as nn
-import torch.nn.init as init
+#import torch.nn.init as init
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -98,6 +98,7 @@ def train(cfg):
     net.decode_feature.classification.apply(weights_init)
     net.aux.classification.apply(weights_init)
 
+    # only for padding_mode = CAP
     # Fix network weights except for CAP full-connection layers in cap_pretrain, and vice versa in cap_train
     if cfg['padding_mode'] in ('cap_pretrain', 'cap_train'):
         lock_list = ['CAP_up','CAP_down','CAP_left','CAP_right']
@@ -281,23 +282,45 @@ def train(cfg):
                     scheduler.step()  # Update Scheduler
 
             # Calculate loss and accuracy for train and val each epoch
+            log_epoch_train_loss = epoch_train_loss/num_train_imgs
+            log_epoch_val_loss = epoch_val_loss/num_val_imgs
+
             t_epoch_finish = time.time()
             print('-------------')
             print('epoch {} || Epoch_TRAIN_Loss:{:.4f} ||Epoch_VAL_Loss:{:.4f}'.format(
-                epoch+1, epoch_train_loss/num_train_imgs, epoch_val_loss/num_val_imgs))
+                epoch+1, log_epoch_train_loss, log_epoch_val_loss))
             print('timer:  {:.4f} sec.'.format(t_epoch_finish - t_epoch_start))
-            t_epoch_start = time.time()
+
+            def save_network_weights(net, cfg):
+                weights_path = cfg['outputs'] + cfg['model'] + '_best.pth'
+                torch.save(net.state_dict(), weights_path)
+                print('network weights were saved: ' + weights_path)
+                return weights_path
+
+            # check val_loss and save network weights if smaller val_loss
+            if((epoch+1) % cfg['val_output_interval'] == 0):
+                if 'min_val_loss' in locals():
+                    if log_epoch_val_loss < min_val_loss:
+                        min_val_loss = log_epoch_val_loss
+                        min_epoch = epoch
+                        weights_path = save_network_weights(net, cfg)
+                else:
+                    min_val_loss = log_epoch_val_loss
+                    weights_path = save_network_weights(net, cfg)
 
             # Save log file
-            log_epoch = {'epoch': epoch+1, 'train_loss': epoch_train_loss /
-                        num_train_imgs, 'val_loss': epoch_val_loss/num_val_imgs}
+            log_epoch = {'epoch': epoch+1, 'train_loss': log_epoch_train_loss, 'val_loss': log_epoch_val_loss}
             logs.append(log_epoch)
             df = pd.DataFrame(logs)
             df.to_csv(cfg['outputs'] + cfg['model'] + '_log_output.csv')
 
-        # Save nework weights
-        weights_path = cfg['outputs'] + cfg['model'] + '_' + str(epoch+1) + '.pth'
-        torch.save(net.state_dict(), weights_path)
+            t_epoch_start = time.time()
+
+        print('-------------')
+        print('min_epoch: ' + str(min_epoch+1) + ' (epoch = ' + str(min_epoch) + ')')
+        print('weights_path: ' + str(weights_path))
+        # weights_path = cfg['outputs'] + cfg['model'] + '_' + str(epoch+1) + '.pth'
+        # torch.save(net.state_dict(), weights_path)
 
     #num_epochs = 160
     train_model(net, dataloaders_dict, criterion, scheduler, optimizer, num_epochs=cfg['num_epochs'])

@@ -4,13 +4,9 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
-import tqdm
 import torch
-import torchvision.transforms as transforms
-import torchvision.utils
 
-from utils.dataloader import make_datapath_list, DataTransform
+from utils.dataloader import DataTransform
 from models.pspnet import PSPNet
 
 DATASET_NCLASS = 21 # VOC: 21
@@ -23,10 +19,6 @@ def get_parser():
 
 def segment_val(cfg):
     
-    #----- Dataset ------#
-    rootpath = cfg['dataset']
-    train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(rootpath=rootpath)
-    
     #----- Network Model ------#
     net = PSPNet(n_classes=DATASET_NCLASS, padding_mode=cfg['padding_mode'])
     [dataset_name, weights_file_path] = cfg['weights']
@@ -36,13 +28,12 @@ def segment_val(cfg):
     print('[Network model] Pretrained weights were loaded.')
     print(cfg['weights'])
 
-    m_IoU_sum_total = 0
     val_data = np.load(cfg['val_images'])
     expanded_size = cfg['expanded_size']
     iou_data = []
     data_summary = [] #[fid, m_iou, m_iou_weighted, sum_effective_px, meanE, DisR]
-    #for fid, filename in enumerate(val_data):
-    for fid, filename in enumerate(val_data[0:3]): #debug
+    for fid, filename in enumerate(val_data):
+    #for fid, filename in enumerate(val_data[0:3]): #debug
         print('---')
         #----- 1. load image & resize ------#
         print('{0}th image:'.format(fid))
@@ -106,14 +97,16 @@ def segment_val(cfg):
             
                 #----- 4. Inference with PSPNet ------#
                 net.eval()
-                x = im_cut.unsqueeze(0) 
+                x = im_cut.unsqueeze(0)
+                #print(x.shape)
+                x = x.to(device) # Send data to GPU if possible
                 outputs = net(x) # outputs = (output, output_aux, cap_loss) for CAP, (output, output_aux) for others
                 y = outputs[0]
                 
                 y_org = y[0].to('cpu').detach().numpy().copy() #(21, 475, 475)
                 y_org = np.argmax(y_org, axis=0) # (475, 475) same as 'anno_cut'
                 
-                # count up predicted class for each patch pixel
+                # count up predicted class for each patch pixel for calculating entropy
                 for category in range(DATASET_NCLASS):
                     pred_cnt[py:py+y_org.shape[0], px:px+y_org.shape[1], category][y_org==category] += 1
                 
@@ -125,8 +118,11 @@ def segment_val(cfg):
 
                 sum_set = np.sum((y_org == labels_num) | (anno_org == labels_num), axis=(0, 1))
                 product_set = np.sum((y_org == labels_num) & (anno_org == labels_num), axis=(0, 1))
-                sum_set = sum_set[1:] # delete background class (first class)
+                
+                # delete background class (first class) for iou calculation
+                sum_set = sum_set[1:]
                 product_set = product_set[1:]
+
                 sum_set_non_zero = sum_set[sum_set != 0]
                 product_set_non_zero = product_set[sum_set != 0]
                 iou_org = product_set_non_zero/sum_set_non_zero
@@ -145,22 +141,65 @@ def segment_val(cfg):
                 data_id = yn * num_px + xn
                 iou_img[data_id] = [fid, py, px, iou, iou_weighted, sum_set_px]
         
-        # calculate entropy for evaluating translation invariance
-        # (ph, pw) patch size
-        cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :]
-        p = cnt_cut / np.sum(cnt_cut, axis=2).reshape(cnt_cut.shape[0], cnt_cut.shape[1], 1)
-        nzi = np.where(p!=0) # nzi = (ndarray[points], ndarray[points], ndarray[points])
-        #print(nzi[0].shape)
-        #nz = np.array([nzi[0], nzi[1], nzi[2]]) # nz[:, 0]: index of 1st point
-        ei = np.zeros(p.shape)
-        ei[nzi] = - p[nzi] * np.log2(p[nzi])
-        #ei = (- p * np.log2(p))*(p>0) # ei=0 when p=0, else calculate entropy
-        e = np.sum(ei, axis=2) # sum ei over classes to calculate entory at each pixel
-        meanE = np.mean(e)
-        disR = np.sum(e > DISR_TH) / e.size
+        # calculating entroy
+        def calc_entropy(cnt, exclude_background = False, annotations = None):
+            # cnt: height x width x classes
+            # background = 0th class
+            # exclude_background = True: pixels with background class in annotations are excluded.
+            BACKGROUND_CLASS = 0
+
+            cnt = cnt.reshape(-1, cnt.shape[2]) # reshape to (pixels x classes)
+            p = cnt / np.sum(cnt, axis=1).reshape(cnt.shape[0], 1) # probability
+            nzi = np.where(p!=0) # nzi = (ndarray[points], ndarray[points])
+            ei = np.zeros(p.shape)
+            ei[nzi] = - p[nzi] * np.log2(p[nzi])
+            e = np.sum(ei, axis=1) # sum ei over classes to calculate entory at each pixel
+            if exclude_background is True:
+                e = e[annotations.flatten() != BACKGROUND_CLASS]
+            meanE = np.mean(e)
+            disR = np.sum(e > DISR_TH) / e.size
+            return meanE, disR
+
+        # # calculating entroy, prediction results of background are removed.
+        # # This is not good, since miss-classification into the background class is ignored in the evaluation of translation invariance.
+        # def calc_entropy(cnt, exclude_background = False):
+        #     # cnt: height x width x classes
+        #     # background = 0th class
+
+        #     cnt = cnt.reshape(-1, cnt.shape[2]) # reshape to (pixels x classes)
+        #     if exclude_background:
+        #         cnt = cnt[:, 1:] # exclude background class
+        #         cnt = cnt[np.where(np.sum(cnt, axis=1) != 0), :][0] # extract pixels with sum over classes is not 0
+        #     if cnt.size == 0: # no pixel (all pixels were judged into the backgrournd class)
+        #         meanE = np.nan
+        #         disR = np.nan
+        #     elif cnt.shape[0] == 1: # only 1 pixel is available
+        #         # since the pixel was always classified into one class, e can not be calculated (always e=0)
+        #         meanE = np.nan
+        #         disR = np.nan
+        #     else:
+        #         p = cnt / np.sum(cnt, axis=1).reshape(cnt.shape[0], 1) # probability
+        #         nzi = np.where(p!=0) # nzi = (ndarray[points], ndarray[points])
+        #         ei = np.zeros(p.shape)
+        #         ei[nzi] = - p[nzi] * np.log2(p[nzi])
+        #         e = np.sum(ei, axis=1) # sum ei over classes to calculate entory at each pixel
+        #         meanE = np.mean(e)
+        #         disR = np.sum(e > DISR_TH) / e.size
+        #     return meanE, disR
+
+        # calculate entropy for evaluating translation invariance (including background class)
+        cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :] # pixels with full overlapping pathces, (ph, pw) patch size
+        meanE_in, disR_in = calc_entropy(cnt_cut, exclude_background=False)
         print('- translation invariance')
-        print('meanE: ' + str(meanE))
-        print('disR: ' + str(disR))
+        print('meanE (includeing background): ' + str(meanE_in))
+        print('disR (includeing background): ' + str(disR_in))
+
+        # calculate entropy for evaluating translation invariance (excluding background class)
+        cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :] # pixels with full overlapping pathces excluding background class (0th class), (ph, pw) patch size
+        annotations_cut = anno_array[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw]
+        meanE_ex, disR_ex = calc_entropy(cnt_cut, exclude_background=True, annotations=annotations_cut)
+        print('meanE (excluding background): ' + str(meanE_ex))
+        print('disR (excluding background): ' + str(disR_ex))
 
         # calculate Intersection over Union (IoU) to evaluate accuracy
         iou_effective = iou_img[:,3][iou_img[:,5]>0]
@@ -177,10 +216,10 @@ def segment_val(cfg):
         iou_data.append(iou_img)
 
         # data log
-        data_summary.append(np.array([fid, m_iou, m_iou_weighted, sum_effective_px, meanE, disR]).reshape(1, -1))
+        data_summary.append(np.array([fid, m_iou, m_iou_weighted, sum_effective_px, meanE_in, disR_in, meanE_ex, disR_ex]).reshape(1, -1))
 
     data_summary = np.concatenate(data_summary)
-    idx = ['fid', 'm_iou', 'm_iou_weighted', 'sum_effective_px', 'meanE', 'disR']
+    idx = ['fid', 'm_iou', 'm_iou_weighted', 'sum_effective_px', 'meanE', 'disR', 'meanE_ex', 'disR_ex']
     pd.DataFrame(data=data_summary, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv')
 
     iou_data = np.concatenate(iou_data)
@@ -193,12 +232,16 @@ def segment_val(cfg):
     # averaged results over all images
     m_iou = np.mean(data_summary[:,1])
     m_iou_weighted = np.average(data_summary[:, 2], weights=data_summary[:, 3])
-    m_meanE = np.mean(data_summary[:, 4])
-    m_disR = np.mean(data_summary[:, 5])
+    m_meanE_in = np.mean(data_summary[:, 4][~np.isnan(data_summary[:, 4])])
+    m_disR_in = np.mean(data_summary[:, 5][~np.isnan(data_summary[:, 5])])
+    m_meanE_ex = np.mean(data_summary[:, 6][~np.isnan(data_summary[:, 6])])
+    m_disR_ex = np.mean(data_summary[:, 7][~np.isnan(data_summary[:, 7])])
     out = np.array([
         'paddingmode: ' + cfg['padding_mode'],
-        'm_meanE: ' + str(m_meanE),
-        'm_disR: ' + str(m_disR),
+        'm_meanE (includeing background): ' + str(m_meanE_in),
+        'm_disR (includeing background): ' + str(m_disR_in),
+        'm_meanE (excluding background): ' + str(m_meanE_ex),
+        'm_disR (excluding background): ' + str(m_disR_ex),
         'm_iou for all images: ' + str(m_iou),
         'm_iou_weightd for all images: ' + str(m_iou_weighted)
     ])
