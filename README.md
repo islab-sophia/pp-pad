@@ -73,8 +73,8 @@ The values in the following results were different from the original ICIP2023 pa
 
 [Weighted average IOU, meanE & disR excluding background class]
 
-- Weighted average version of mIoU.
-- meanE & disR excluding the background class
+- Weighted average version of mIoU (mIoU_weighted)
+- meanE & disR excluding the background class (meanE_ex, disR_ex)
 
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
