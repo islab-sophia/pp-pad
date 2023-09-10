@@ -66,13 +66,13 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.3082 | 0.4786 | 0.6151 |
+| Conventional | Zero | | | |
 | | Reflect |
 | | Replicate |
 | | Circular |
 | Previous | CAP [19] |
 | | Partial [17] |
-| Proposed | PP-Pad (2x3) | 0.3151 | 0.4792 | 0.5896 |
+| Proposed | PP-Pad (2x3) | | | |
 | | PP-Pad (3x3) |
 | | PP-Pad (5x3) |
 | | PP-Pad (10x3) |
@@ -84,13 +84,13 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.3924 | 0.6012 | 0.7515 |
+| Conventional | Zero | | | |
 | | Reflect |
 | | Replicate |
 | | Circular |
 | Previous | CAP [19] |
 | | Partial [17] |
-| Proposed | PP-Pad (2x3) | 0.4066 | 0.5985 | 0.7266 |
+| Proposed | PP-Pad (2x3) | | | |
 | | PP-Pad (3x3) |
 | | PP-Pad (5x3) |
 | | PP-Pad (10x3) |
