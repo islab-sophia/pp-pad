@@ -11,7 +11,7 @@ In addition to this repository, download the following files, and then place the
 - VOCtrainval_11-May-2012.tar:  
 -- Download 'VOCtrainval_11-May-2012.tar' from 'Download the training/validation data (2GB tar file)' in http://host.robots.ox.ac.uk/pascal/VOC/voc2012/#devkit  
 -- Place 'VOCdevkit' folder under pp-pad/program/dataset/
-- weights.zip (xxx MB): pp-pad/program/weights
+- [weights.zip](https://drive.google.com/file/d/1mKZxRhL1VDRNTppBJHN_ljHf_O6FUQJe/view?usp=sharing) (522 MB): pp-pad/program/weights
 
 # Examples
 Change current directory:
