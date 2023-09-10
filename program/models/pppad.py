@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
+import models.pppad_prm as prm
 
-REF_PPPAD = (2, 3) # default values for reference range in pp-pad (hp, wp). wp shold be odd value.
+#REF_PPPAD = (2, 3) # default values for reference range in pp-pad (hp, wp). wp shold be odd value. Imported from pppad_prm.
 
 # Padding Calculation Class for PP-Pad
 class calc_padding(nn.Module):
-    def __init__(self, padding, channels, ref = REF_PPPAD):
+    def __init__(self, padding, channels, ref = prm.REF_PPPAD):
         # ref = (hp, wp) for top padding
         self.ref = ref
         super(calc_padding, self).__init__()

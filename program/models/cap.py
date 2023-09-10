@@ -112,12 +112,6 @@ class CAP(nn.Module):
 
         return x
 
-class calc_padding(nn.Module):
-    def __init__(self, padding):
-        super(calc_padding, self).__init__()
-        self.padding = padding
-
-
 class calc_padding_CAP(nn.Module):
     def __init__(self, padding, padding_mode = 'cap_pretrain', ref = CAP_REF_RANGE):
         super(calc_padding_CAP, self).__init__()

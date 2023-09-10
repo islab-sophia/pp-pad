@@ -16,6 +16,9 @@ import torch.optim as optim
 
 from models.pspnet import PSPNet
 
+DATASET_NCLASS_ADE = 150
+DATASET_NCLASS_VOC = 21
+
 prm_rand_seed = 1234
 torch.manual_seed(prm_rand_seed)
 np.random.seed(prm_rand_seed)
@@ -23,8 +26,7 @@ random.seed(prm_rand_seed)
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', type=str, default='config/cfg_sample_pspnet.yaml',
-                        help='config file')
+    parser.add_argument('--cfg', type=str, default='config/cfg_sample_pspnet.yaml', help='config file')
     return parser
 
 def train(cfg):
@@ -66,37 +68,39 @@ def train(cfg):
     val_dataloader = data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     dataloaders_dict = {"train": train_dataloader, "val": val_dataloader}
 
-
     #----- Network Model ------#
 
     # PSPNet
-    # Pretrained model with ADE20K dataset (150 Classes)
-    net = PSPNet(n_classes=150, padding_mode=cfg['padding_mode'])
-
-    # Load pretrained parameters with ADE20K
-    state_dict = torch.load(cfg['pretrain'][1])
-    if cfg['pretrain'][0] == 'ADE':
+    [dataset_name, weights_file_path] = cfg['pretrain']
+    if dataset_name == 'ADE':
+        # Pretrained model with ADE20K dataset (150 Classes)
+        net = PSPNet(n_classes=DATASET_NCLASS_ADE, padding_mode=cfg['padding_mode'])
+        state_dict = torch.load(weights_file_path)
         net.load_state_dict(state_dict, strict=False)
 
-    # Replace last layers for classification into the layers with 21 classes
-    n_classes = 21
-    net.decode_feature.classification = nn.Conv2d(
-        in_channels=512, out_channels=n_classes, kernel_size=1, stride=1, padding=0)
-    net.aux.classification = nn.Conv2d(
-        in_channels=256, out_channels=n_classes, kernel_size=1, stride=1, padding=0)
+        # Replace last layers for classification into the layers with 21 classes
+        net.decode_feature.classification = nn.Conv2d(in_channels=512, out_channels=DATASET_NCLASS_VOC, kernel_size=1, stride=1, padding=0)
+        net.aux.classification = nn.Conv2d(in_channels=256, out_channels=DATASET_NCLASS_VOC, kernel_size=1, stride=1, padding=0)
 
-    if cfg['pretrain'][0] == 'VOC':
+        # Initialize replaced convolution layers
+        def weights_init(m):
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_normal_(m.weight.data)
+                if m.bias != None:  # with bias
+                    nn.init.constant_(m.bias, 0.0)
+
+        # Apply the classification layers in the model
+        net.decode_feature.classification.apply(weights_init)
+        net.aux.classification.apply(weights_init)
+
+    elif dataset_name == 'VOC':
+        net = PSPNet(n_classes=DATASET_NCLASS_VOC, padding_mode=cfg['padding_mode'])
+        state_dict = torch.load(weights_file_path)
         net.load_state_dict(state_dict, strict=False)
 
-    # Initialize replaced convolution layers
-    def weights_init(m):
-        if isinstance(m, nn.Conv2d):
-            nn.init.xavier_normal_(m.weight.data)
-            if m.bias != None:  # with bias
-                nn.init.constant_(m.bias, 0.0)
-
-    net.decode_feature.classification.apply(weights_init)
-    net.aux.classification.apply(weights_init)
+    else:
+        print('Pretrain model should be ADE or VOC.')
+        return
 
     # only for padding_mode = CAP
     # Fix network weights except for CAP full-connection layers in cap_pretrain, and vice versa in cap_train
@@ -208,7 +212,7 @@ def train(cfg):
 
         # Loop for epoch
         #for epoch in tqdm(range(num_epochs)):
-        for epoch in range(num_epochs):
+        for epoch in range(num_epochs+1):
             # Starting time
             t_epoch_start = time.time()
             t_iter_start = time.time()
@@ -216,22 +220,26 @@ def train(cfg):
             epoch_val_loss = 0.0  # Val loss for this epoch
 
             print('-------------')
-            print('Epoch {}/{}'.format(epoch+1, num_epochs))
+            print('Epoch {}/{}'.format(epoch, num_epochs))
             print('-------------')
 
             # train / val
             for phase in ['train', 'val']:
                 if phase == 'train':
-                    net.train()  # Train mode
-                    #scheduler.step()  # Update Scheduler for optimizer
-                    optimizer.zero_grad()
-                    print('（train）')
-                else:
-                    if((epoch+1) % cfg['val_output_interval'] == 0):
+                    if epoch == 0:
+                        # only val for 0th loop
+                        continue
+                    else:
+                        net.train()  # Train mode
+                        #scheduler.step()  # Update Scheduler for optimizer
+                        optimizer.zero_grad()
+                        print('（train）')
+                else: # validation
+                    if (epoch % cfg['val_output_interval'] == 0):
                         net.eval()   # Validation mode
                         print('-------------')
                         print('（val）')
-                    else:
+                    else: 
                         # Calculate validation every 5 epoches
                         continue
 
@@ -275,7 +283,8 @@ def train(cfg):
 
                             epoch_train_loss += loss.item() * batch_multiplier
                             iteration += 1
-                        else: # Validation
+                        else:
+                            # Validation
                             epoch_val_loss += loss.item() * batch_multiplier
                 
                 if phase == 'train':
@@ -287,9 +296,6 @@ def train(cfg):
 
             t_epoch_finish = time.time()
             print('-------------')
-            print('epoch {} || Epoch_TRAIN_Loss:{:.4f} ||Epoch_VAL_Loss:{:.4f}'.format(
-                epoch+1, log_epoch_train_loss, log_epoch_val_loss))
-            print('timer:  {:.4f} sec.'.format(t_epoch_finish - t_epoch_start))
 
             def save_network_weights(net, cfg):
                 weights_path = cfg['outputs'] + cfg['model'] + '_best.pth'
@@ -298,18 +304,26 @@ def train(cfg):
                 return weights_path
 
             # check val_loss and save network weights if smaller val_loss
-            if((epoch+1) % cfg['val_output_interval'] == 0):
-                if 'min_val_loss' in locals():
-                    if log_epoch_val_loss < min_val_loss:
-                        min_val_loss = log_epoch_val_loss
-                        min_epoch = epoch
-                        weights_path = save_network_weights(net, cfg)
-                else:
+            if epoch == 0:
+                # save initial model
+                min_val_loss = log_epoch_val_loss
+                min_epoch = 0
+                weights_path = save_network_weights(net, cfg)
+                print('epoch {} || Epoch_TRAIN_Loss:{:.4f} || Epoch_VAL_Loss:{:.4f}'.format(epoch, log_epoch_train_loss, log_epoch_val_loss))
+            elif (epoch % cfg['val_output_interval'] == 0):
+                if (log_epoch_val_loss < min_val_loss):
                     min_val_loss = log_epoch_val_loss
+                    min_epoch = epoch
                     weights_path = save_network_weights(net, cfg)
+                print('epoch {} || Epoch_TRAIN_Loss:{:.4f} || Epoch_VAL_Loss:{:.4f}'.format(epoch, log_epoch_train_loss, log_epoch_val_loss))
+            else:
+                print('epoch {} || Epoch_TRAIN_Loss:{:.4f}'.format(epoch, log_epoch_train_loss))
+
+            print('min_epoch {} || min_val_loss:{:.4f}'.format(min_epoch, min_val_loss))
+            print('timer:  {:.4f} sec.'.format(t_epoch_finish - t_epoch_start))
 
             # Save log file
-            log_epoch = {'epoch': epoch+1, 'train_loss': log_epoch_train_loss, 'val_loss': log_epoch_val_loss}
+            log_epoch = {'epoch': epoch, 'train_loss': log_epoch_train_loss, 'val_loss': log_epoch_val_loss}
             logs.append(log_epoch)
             df = pd.DataFrame(logs)
             df.to_csv(cfg['outputs'] + cfg['model'] + '_log_output.csv')
@@ -317,12 +331,16 @@ def train(cfg):
             t_epoch_start = time.time()
 
         print('-------------')
-        print('min_epoch: ' + str(min_epoch+1) + ' (epoch = ' + str(min_epoch) + ')')
+        print('min_epoch: ' + str(min_epoch))
         print('weights_path: ' + str(weights_path))
-        # weights_path = cfg['outputs'] + cfg['model'] + '_' + str(epoch+1) + '.pth'
-        # torch.save(net.state_dict(), weights_path)
 
-    #num_epochs = 160
+        # save final model. Since val data is also used in the evaluation, the final model should be used in the evaluation, instead of the best model based on the val data.
+        weights_path = cfg['outputs'] + cfg['model'] + '_' + str(epoch + cfg['num_epoch_offset']) +'.pth'
+        torch.save(net.state_dict(), weights_path)
+
+        print('weights_path: ' + str(weights_path))
+        print('network weights were saved: ' + weights_path)
+
     train_model(net, dataloaders_dict, criterion, scheduler, optimizer, num_epochs=cfg['num_epochs'])
 
     return

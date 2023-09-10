@@ -28,7 +28,8 @@ def segment_val(cfg):
     print('[Network model] Pretrained weights were loaded.')
     print(cfg['weights'])
 
-    val_data = np.load(cfg['val_images'])
+    #val_data = np.load(cfg['val_images'])
+    val_data = np.loadtxt(cfg['val_images'], delimiter=',', dtype=str)
     expanded_size = cfg['expanded_size']
     iou_data = []
     data_summary = [] #[fid, m_iou, m_iou_weighted, sum_effective_px, meanE, DisR]
@@ -37,7 +38,7 @@ def segment_val(cfg):
         print('---')
         #----- 1. load image & resize ------#
         print('{0}th image:'.format(fid))
-        filename = filename.replace('\n','') # remove return code
+        #filename = filename.replace('\n','') # remove return code
         image_file_path = cfg['dataset'] + 'JPEGImages/' + filename + '.jpg'
         anno_file_path = cfg['dataset'] + 'SegmentationClass/' + filename + '.png'
         print(image_file_path)
@@ -71,7 +72,7 @@ def segment_val(cfg):
         num_py = len(np.arange(0, im_array.shape[0]-ph+1, patch_stride))
         num_px = len(np.arange(0, im_array.shape[1]-pw+1, patch_stride))
         np.set_printoptions(precision=5, suppress=True) #default: precision=8, suppress=False
-        iou_img = np.zeros((num_py * num_px, 6)) # [fid, py, px, iou, iou_weighted, sum_set_px]
+        iou_img = np.zeros((num_py * num_px, 6)) # [fid, py, px, iou, iou_weighted, effective_px]
         pred_cnt = np.zeros((im_array.shape[0], im_array.shape[1], DATASET_NCLASS)) # count prediction results of sliding patches
         for py in np.arange(0, im_array.shape[0]-ph+1, patch_stride):
             for px in np.arange(0, im_array.shape[1]-pw+1, patch_stride):
@@ -116,9 +117,11 @@ def segment_val(cfg):
                 labels_num = np.arange(DATASET_NCLASS).reshape(1, 1, DATASET_NCLASS)
                 anno_org = anno_org.reshape(anno_org.shape[0], anno_org.shape[1], 1)
 
-                sum_set = np.sum((y_org == labels_num) | (anno_org == labels_num), axis=(0, 1))
-                product_set = np.sum((y_org == labels_num) & (anno_org == labels_num), axis=(0, 1))
-                
+                sum_set_array = (y_org == labels_num) | (anno_org == labels_num)
+                sum_set = np.sum(sum_set_array, axis=(0, 1))
+                product_set_array = (y_org == labels_num) & (anno_org == labels_num)
+                product_set = np.sum(product_set_array, axis=(0, 1))
+
                 # delete background class (first class) for iou calculation
                 sum_set = sum_set[1:]
                 product_set = product_set[1:]
@@ -127,19 +130,21 @@ def segment_val(cfg):
                 product_set_non_zero = product_set[sum_set != 0]
                 iou_org = product_set_non_zero/sum_set_non_zero
                 
+                # Calculate the number of effective pixels to calculate weighted average of iou.
+                # The effective pixels have union (sum_set) = 1 at least one class.
+                effective_px = np.sum(np.sum(sum_set_array, axis=2) > 0)
+                
                 if sum_set_non_zero.size == 0:
                     iou = 0
                     iou_weighted = 0
-                    sum_set_px = 0
                 else:
                     iou = np.mean(iou_org)
                     iou_weighted = np.average(iou_org, weights=sum_set_non_zero) # weighted average
-                    sum_set_px = np.sum(sum_set_non_zero)
 
-                # iou_img: [fid, py, px, iou, iou_weighted, sum_set_px]
+                # iou_img: [fid, py, px, iou, iou_weighted, effective_px]
                 [yn, xn] = [int(py/patch_stride), int(px/patch_stride)]
                 data_id = yn * num_px + xn
-                iou_img[data_id] = [fid, py, px, iou, iou_weighted, sum_set_px]
+                iou_img[data_id] = [fid, py, px, iou, iou_weighted, effective_px]
         
         # calculating entroy
         def calc_entropy(cnt, exclude_background = False, annotations = None):
@@ -156,8 +161,12 @@ def segment_val(cfg):
             e = np.sum(ei, axis=1) # sum ei over classes to calculate entory at each pixel
             if exclude_background is True:
                 e = e[annotations.flatten() != BACKGROUND_CLASS]
-            meanE = np.mean(e)
-            disR = np.sum(e > DISR_TH) / e.size
+            if e.size == 0: # no pixel (all pixels were judged into the backgrournd class)
+                meanE = np.nan
+                disR = np.nan
+            else:
+                meanE = np.mean(e)
+                disR = np.sum(e > DISR_TH) / e.size
             return meanE, disR
 
         # # calculating entroy, prediction results of background are removed.
@@ -223,7 +232,7 @@ def segment_val(cfg):
     pd.DataFrame(data=data_summary, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv')
 
     iou_data = np.concatenate(iou_data)
-    idx = ['fid', 'py', 'px', 'iou', 'iou_weighted', 'sum_set_px']
+    idx = ['fid', 'py', 'px', 'iou', 'iou_weighted', 'effective_px']
     pd.DataFrame(data=iou_data, columns=idx).to_csv(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'iou_data.csv')
     
     # np.savetxt(cfg['outputs'] + 'segment_val' + '_' + cfg['padding_mode'] + '_' + 'data_summary.csv', data_summary, delimiter=',', fmt='%8.16f')
@@ -237,7 +246,7 @@ def segment_val(cfg):
     m_meanE_ex = np.mean(data_summary[:, 6][~np.isnan(data_summary[:, 6])])
     m_disR_ex = np.mean(data_summary[:, 7][~np.isnan(data_summary[:, 7])])
     out = np.array([
-        'paddingmode: ' + cfg['padding_mode'],
+        'padding_mode: ' + cfg['padding_mode'],
         'm_meanE (includeing background): ' + str(m_meanE_in),
         'm_disR (includeing background): ' + str(m_disR_in),
         'm_meanE (excluding background): ' + str(m_meanE_ex),

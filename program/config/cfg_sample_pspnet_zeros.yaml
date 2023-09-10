@@ -4,22 +4,23 @@ padding_mode: 'zeros' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 
 
 # path for PSPNet.py
 dataset: './dataset/VOCdevkit/VOC2012/'
-#pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
-pretrain: ['VOC', './weights/pspnet_zeros_160.pth'] #for pp-pad, partial as pretrain model with 0 padding
-#pretrain: ['VOC', './outputs/pspnet_cap_pretrain_best.pth'] # for cap_train. weight file by cap_pretrain
+pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
+#pretrain: ['VOC', './weights/pspnet_zeros_160.pth'] #for pp-pad, partial as pretrain model with 0 padding
+#pretrain: ['VOC', './outputs/pspnet_cap_pretrain_160.pth'] # for cap_train. weight file by cap_pretrain
 outputs: './outputs/'
 
 # training parameters
 num_epochs: 160
+num_epoch_offset: 0 # If the training is resumed from previous training, the number of epochs in the previous training should be set here. It only affects the output weight filename.
 val_output_interval: 5
 batch_size: 6
 batch_multiplier: 4
-optimizer: 'sgd' # 'adam' for cap_train, 'sgd' for others
-# Reference range for pp-pad is specified in models/pppad.py: REF_PPPAD
+optimizer: 'sgd' # 'adam' for cap_pretrain, 'sgd' for others
+# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
 
 # path for segment_val.py
-val_images: './val_100.npy'
-weights: ['VOC', './outputs/pspnet_zeros_best.pth']
+val_images: './val_100.csv'
+weights: ['VOC', './outputs/pspnet_zeros_160.pth'] # "./outputs/pspnet_"+ padding_mode + "_" + num_epochs + num_epoch_offset + ".pth"
 
 # image sizes
 input_size: 475 # 512 for CAP, 475 for others
