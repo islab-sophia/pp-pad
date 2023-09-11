@@ -60,7 +60,7 @@ sample config file: program/config/cfg_sample.yaml
 # Results
 The values in the following results were different from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code.
 
-[Simple mean IOU, meanE & disR including background class]
+[Simple mean IOU (excluding background), meanE & disR (including background class)]
 - mIoU is simple mean of IoU, but not weighted average. The background class was excluded in the calculation of IoU.
 - meanE and disR were calculated including background class.
 
@@ -77,9 +77,9 @@ The values in the following results were different from the original ICIP2023 pa
 | | PP-Pad (5x3) |
 | | PP-Pad (10x3) |
 
-[Weighted average IOU, meanE & disR excluding background class]
+[Weighted average IOU, meanE, and disR excluding background class]
 
-- Weighted average version of mIoU (mIoU_weighted). Each patch was weighted by the number of effective pixels. 'effective' means that union of predicted area and ground-truth area is not zero in at least one class when calculating IoU for each patch. By weighting, patches filled with the background can be less contributed to mIoU. 
+- Weighted average version of mIoU (mIoU_weighted). Each patch was weighted by the number of effective pixels. 'effective' means that union of predicted area and ground-truth area is not zero in at least one class when (excluding the background class) calculating IoU for each patch. By weighting, patches filled with the background can be less contributed to mIoU, since the background class was excluded in mIoU calculations.
 - meanE & disR excluding the background class in annotation (meanE_ex, disR_ex)
 
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
