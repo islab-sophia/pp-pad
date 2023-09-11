@@ -169,8 +169,8 @@ def segment_val(cfg):
                 disR = np.sum(e > DISR_TH) / e.size
             return meanE, disR
 
-        # # calculating entroy, prediction results of background are removed.
-        # # This is not good, since miss-classification into the background class is ignored in the evaluation of translation invariance.
+        # # calculating entroy. Prediction results of background are removed.
+        # # This is not good, since miss-classification into the background class is ignored in the evaluation of translation invariance. Instead, the background class is excluded based on the annotation above.
         # def calc_entropy(cnt, exclude_background = False):
         #     # cnt: height x width x classes
         #     # background = 0th class
