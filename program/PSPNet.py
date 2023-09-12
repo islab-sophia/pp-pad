@@ -43,8 +43,7 @@ def train(cfg):
     from utils.dataloader import make_datapath_list, DataTransform_2, VOCDataset
 
     # filepath list
-    train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(
-        rootpath=cfg['dataset'])
+    train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(rootpath=cfg['dataset'], excluding_val100=cfg['excluding_val100'])
 
     # Dataset
     color_mean = cfg['color_mean']
@@ -334,7 +333,7 @@ def train(cfg):
         print('min_epoch: ' + str(min_epoch))
         print('weights_path: ' + str(weights_path))
 
-        # save final model. Since val data is also used in the evaluation, the final model should be used in the evaluation, instead of the best model based on the val data.
+        # save final model. 'validation' is calculated for the file list in 'val_100_train.csv', which excludes files in 'val_100.csv' used in evaluation from the original 'val.txt' in 'dataset/VOCdevkit/VOC2012/ImageSets/Segmentation/'.
         weights_path = cfg['outputs'] + cfg['model'] + '_' + str(epoch + cfg['num_epoch_offset']) +'.pth'
         torch.save(net.state_dict(), weights_path)
 

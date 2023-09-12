@@ -14,7 +14,7 @@ DEFAULT_INPUT_SIZE = 475
 DEFAULT_COLOR_MEAN = (0.485, 0.456, 0.406)
 DEFAULT_COLOR_STD = (0.229, 0.224, 0.225)
 
-def make_datapath_list(rootpath):
+def make_datapath_list(rootpath, excluding_val100=False):
     """
     Create filepath list to image and annotation data in train and val
 
@@ -34,7 +34,10 @@ def make_datapath_list(rootpath):
 
     # Filepath including train filenames and val filenames
     train_id_names = osp.join(rootpath + 'ImageSets/Segmentation/train.txt')
-    val_id_names = osp.join(rootpath + 'ImageSets/Segmentation/val.txt')
+    if excluding_val100:
+        val_id_names = osp.join('val_100_train.csv') #'validation' is calculated for the file list in 'val_100_train.csv', which excludes files in 'val_100.csv' used in evaluation from the original 'val.txt' in 'dataset/VOCdevkit/VOC2012/ImageSets/Segmentation/'.
+    else:
+        val_id_names = osp.join(rootpath + 'ImageSets/Segmentation/val.txt')
 
     # Create filepath lists for train image files and annotation files
     train_img_list = list()

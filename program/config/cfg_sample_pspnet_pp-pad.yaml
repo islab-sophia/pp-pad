@@ -1,6 +1,7 @@
 # cfg_sample_pspnet_pp-pad.yaml
 
 padding_mode: 'pp-pad' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
+# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
 
 # path for PSPNet.py
 dataset: './dataset/VOCdevkit/VOC2012/'
@@ -16,11 +17,14 @@ val_output_interval: 5
 batch_size: 6
 batch_multiplier: 4
 optimizer: 'sgd' # 'adam' for cap_pretrain, 'sgd' for others
-# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
+excluding_val100: True # excluding evaluation data (val100) from validation data in training
 
 # path for segment_val.py
 val_images: './val_100.csv'
-weights: ['VOC', './outputs/pspnet_pp-pad_160.pth'] # "./outputs/pspnet_"+ padding_mode + "_" + num_epochs + num_epoch_offset + ".pth"
+#weights: ['VOC', './outputs/pspnet_pp-pad_160.pth']
+weights: ['VOC', './outputs/pspnet_pp-pad_best.pth']
+# '_best.pth' for excluding_val100 = True 
+# '_(num_epochs+num_epoch_offset).pth' for excluding_val100 = False
 
 # image sizes
 input_size: 475 # 512 for CAP, 475 for others
