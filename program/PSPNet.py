@@ -43,7 +43,14 @@ def train(cfg):
     from utils.dataloader import make_datapath_list, DataTransform_2, VOCDataset
 
     # filepath list
-    train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(rootpath=cfg['dataset'], excluding_val100=cfg['excluding_val100'])
+    if 'valtrain' in cfg:
+        if cfg['valtrain'] == 'None':
+            valtrain_path = None
+        else:
+            valtrain_path = cfg['valtrain']
+    else:
+        valtrain_path = None
+    train_img_list, train_anno_list, val_img_list, val_anno_list = make_datapath_list(rootpath=cfg['dataset'], valtrain_path=valtrain_path)
 
     # Dataset
     color_mean = cfg['color_mean']

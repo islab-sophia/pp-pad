@@ -16,14 +16,14 @@ val_output_interval: 5
 batch_size: 6
 batch_multiplier: 4
 optimizer: 'sgd' # 'adam' for cap_pretrain, 'sgd' for others
-excluding_val100: True # excluding evaluation data (val100) from validation data in training
+valtrain: None # 'val_100_train.csv' # path for validation data in training, which should be excluding evaluation data in val100.
 
 # path for segment_val.py
 val_images: './val_100.csv'
-#weights: ['VOC', './outputs/pspnet_zeros_160.pth']
-weights: ['VOC', './outputs/pspnet_zeros_best.pth']
-# '_best.pth' for excluding_val100 = True 
-# '_(num_epochs+num_epoch_offset).pth' for excluding_val100 = False
+weights: ['VOC', './outputs/pspnet_zeros_160.pth']
+#weights: ['VOC', './outputs/pspnet_zeros_best.pth']
+# '_best.pth' when 'valtrain' is excluding val_100 data
+# '_(num_epochs+num_epoch_offset).pth' when 'valtrain' is None, or including val_100 data.
 
 # image sizes
 input_size: 475 # 512 for CAP, 475 for others
