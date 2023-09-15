@@ -62,7 +62,7 @@ def segment_val(cfg):
         #plt.imsave(samples/filename + '.png', anno_array) # to confirm the image
         
         #----- 2. Instance of Preprocessing Class ------#
-        transform = DataTransform(input_size=475, color_mean=cfg['color_mean'], color_std=cfg['color_std'])
+        transform = DataTransform(input_size=cfg['input_size'], color_mean=cfg['color_mean'], color_std=cfg['color_std'])
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         net.to(device)
 
@@ -99,7 +99,6 @@ def segment_val(cfg):
                 #----- 4. Inference with PSPNet ------#
                 net.eval()
                 x = im_cut.unsqueeze(0)
-                #print(x.shape)
                 x = x.to(device) # Send data to GPU if possible
                 outputs = net(x) # outputs = (output, output_aux, cap_loss) for CAP, (output, output_aux) for others
                 y = outputs[0]

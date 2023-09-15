@@ -18,10 +18,10 @@ class PSPNet(nn.Module):
         block_config = [3, 4, 6, 3]  # resnet50
         if padding_mode in ('cap_pretrain', 'cap_train'):
             img_size = 512
-            img_size_8 = 64  # img_size / 8
+            #img_size_8 = 64  # img_size / 8
         else:
             img_size = 475
-            img_size_8 = 60  # img_size / 8
+            #img_size_8 = 60  # img_size / 8
 
         # Subnetworks (four modules)
         self.feature_conv = FeatureMap_convolution(padding_mode)
@@ -35,7 +35,8 @@ class PSPNet(nn.Module):
             n_blocks=block_config[3], in_channels=1024, mid_channels=512, out_channels=2048, stride=1, dilation=4, padding_mode=padding_mode)
 
         self.pyramid_pooling = PyramidPooling(in_channels=2048, pool_sizes=[
-            6, 3, 2, 1], height=img_size_8, width=img_size_8, padding_mode=padding_mode)
+            6, 3, 2, 1], padding_mode=padding_mode)
+            #6, 3, 2, 1], height=img_size_8, width=img_size_8, padding_mode=padding_mode)
 
         self.decode_feature = DecodePSPFeature(
             height=img_size, width=img_size, n_classes=n_classes, padding_mode=padding_mode)
@@ -228,12 +229,13 @@ class bottleNeckIdentifyPSP(nn.Module):
 
 
 class PyramidPooling(nn.Module):
-    def __init__(self, in_channels, pool_sizes, height, width, padding_mode='zeros'):
+    #def __init__(self, in_channels, pool_sizes, height, width, padding_mode='zeros'):
+    def __init__(self, in_channels, pool_sizes, padding_mode='zeros'):
         super(PyramidPooling, self).__init__()
 
         # Image size
-        self.height = height
-        self.width = width
+        # self.height = height
+        # self.width = width
 
         # Output channels in each conv layer
         out_channels = int(in_channels / len(pool_sizes))
@@ -257,22 +259,28 @@ class PyramidPooling(nn.Module):
             in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, bias=False, padding_mode=padding_mode)
 
     def forward(self, x):
+        height = x.shape[2]
+        width = x.shape[3]
 
         out1 = self.cbr_1(self.avpool_1(x))
         out1 = F.interpolate(out1, size=(
-            self.height, self.width), mode="bilinear", align_corners=True)
+            height, width), mode="bilinear", align_corners=True)
+            #self.height, self.width), mode="bilinear", align_corners=True)
 
         out2 = self.cbr_2(self.avpool_2(x))
         out2 = F.interpolate(out2, size=(
-            self.height, self.width), mode="bilinear", align_corners=True)
+            height, width), mode="bilinear", align_corners=True)
+            #self.height, self.width), mode="bilinear", align_corners=True)
 
         out3 = self.cbr_3(self.avpool_3(x))
         out3 = F.interpolate(out3, size=(
-            self.height, self.width), mode="bilinear", align_corners=True)
+            height, width), mode="bilinear", align_corners=True)
+            #self.height, self.width), mode="bilinear", align_corners=True)
 
         out4 = self.cbr_4(self.avpool_4(x))
         out4 = F.interpolate(out4, size=(
-            self.height, self.width), mode="bilinear", align_corners=True)
+            height, width), mode="bilinear", align_corners=True)
+            #self.height, self.width), mode="bilinear", align_corners=True)
 
         # Concat features along dim=1
         output = torch.cat([x, out1, out2, out3, out4], dim=1)
