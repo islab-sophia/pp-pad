@@ -58,7 +58,7 @@ sample config file: program/config/cfg_sample.yaml
 - color_std: Standard deviations of images in the dataset
 
 # Results
-The values in the following results were different from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code.
+The values in the following results were different from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code. The network was trained in 320 epoches.
 
 [Simple mean IOU (excluding background), meanE & disR (including background class)]
 - mIoU is simple mean of IoU, but not weighted average. The background class was excluded in the calculation of IoU.

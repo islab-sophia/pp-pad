@@ -79,7 +79,7 @@ class conv_mlp_pppad(nn.Module):
         super(conv_mlp_pppad, self).__init__()
         pad_wp = int((wp - 1) / 2) - 1 # wp should be odd value.
         self.classifier = nn.Sequential(
-            nn.Conv2d(input_channels, hidden_channels, kernel_size=(wp,1), stride=1, padding=pad_wp, dilation=1, bias=True),
+            nn.Conv2d(input_channels, hidden_channels, kernel_size=(wp,1), stride=1, padding=(pad_wp, 0), dilation=1, bias=True),
             nn.ReLU(inplace=True),
             nn.Conv2d(hidden_channels, hidden_channels, kernel_size=1, stride=1, padding=0, dilation=1, bias=True),
             nn.ReLU(inplace=True),
