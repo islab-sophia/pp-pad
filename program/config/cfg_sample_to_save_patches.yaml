@@ -1,0 +1,45 @@
+# cfg_sample.yaml
+
+padding_mode: 'pp-pad' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
+# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
+
+# path for PSPNet.py
+dataset: './dataset/VOCdevkit/VOC2012/'
+pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
+#pretrain: ['VOC', './weights/pspnet_zeros_160.pth'] #for pp-pad, partial as pretrain model with 0 padding
+#pretrain: ['VOC', './outputs/pspnet_cap_pretrain_160.pth'] # for cap_train. weight file by cap_pretrain
+outputs: './outputs/'
+
+# training parameters
+num_epochs: 4 #160
+num_epoch_offset: 0 # If the training is resumed from previous training, the number of epochs in the previous training should be set here. It only affects the output weight filename.
+val_output_interval: 2 #5
+batch_size: 6
+batch_multiplier: 4
+optimizer: 'sgd' # 'adam' for cap_pretrain, 'sgd' for others
+valtrain: None #'val_100_train.csv' # path for validation data in training, which should be excluding evaluation data in val100.
+
+# path for segment_val.py
+val_images: './val_100.csv'
+#weights: ['VOC', './outputs/pspnet_pp-pad_160.pth']
+#weights: ['VOC', './outputs/pspnet_pp-pad_160.pth']
+weights: ['VOC',  'results/20230919_01_pp-pad_320/pspnet_pp-pad_320.pth'] #pppad2x3
+#weights: ['VOC',  'results/20230915_04_pp-pad_320_5x5/pspnet_pp-pad_320.pth'] #pppad5x5
+#weights: ['VOC', 'results/20230913_03_zeros_320/pspnet_zeros_320.pth']
+#weights: ['VOC', 'results/20230914_01_partial_320/pspnet_partial_320.pth']
+#weights: ['VOC', 'results/20230914_02_cap_320/pspnet_cap_train_320.pth']
+# '_best.pth' when 'valtrain' is excluding val_100 data
+# '_(num_epochs+num_epoch_offset).pth' when 'valtrain' is None, or including val_100 data.
+
+# image sizes
+input_size: 475 # 512 for CAP, 475 for others
+expanded_size: 1050 # input image is first expanded to expanded_size, and then crop the image in input_size.
+patch_stride: 47
+
+# dataset info
+color_mean: [0.485, 0.456, 0.406]
+color_std: [0.229, 0.224, 0.225]
+
+# save_patches.py
+sample_images: ['2011_001005', '2008_003926', '2007_001457', '2007_001733', '2009_004942', '2011_001069', '2010_001908']
+#sample_images: ['2010_004348', '2010_002792']
