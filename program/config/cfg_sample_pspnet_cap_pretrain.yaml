@@ -5,7 +5,6 @@ padding_mode: 'cap_pretrain' # 'zeros', 'reflect', 'replicate', 'circular', 'par
 # path for PSPNet.py
 dataset: './dataset/VOCdevkit/VOC2012/'
 pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
-#pretrain: ['VOC', './weights/pspnet_zeros_160.pth'] #for pp-pad, partial as pretrain model with 0 padding
 #pretrain: ['VOC', './outputs/pspnet_cap_pretrain_160.pth'] # for cap_train. weight file by cap_pretrain
 outputs: './outputs/'
 
