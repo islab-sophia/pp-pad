@@ -10,16 +10,16 @@ PARTIAL_PADDING_MODE = 'zeros' # 'zeros', 'reflect', 'replicate', 'circular' for
 CAP_PADDING_MODE = 'zeros' # 'zeros', 'reflect', 'replicate', 'circular' for base padding method in CAP
 
 class PSPNet(nn.Module):
-    def __init__(self, n_classes, padding_mode='pp-pad'):
+    def __init__(self, n_classes, img_size, padding_mode='pp-pad'):
         super(PSPNet, self).__init__()
 
         # paramter settings
         self.padding_mode = padding_mode
         block_config = [3, 4, 6, 3]  # resnet50
-        if padding_mode in ('cap_pretrain', 'cap_train'):
-            img_size = 512
-        else:
-            img_size = 475
+        # if padding_mode in ('cap_pretrain', 'cap_train'):
+        #     img_size = 512
+        # else:
+        #     img_size = 475
 
         # Subnetworks (four modules)
         self.feature_conv = FeatureMap_convolution(padding_mode)
@@ -117,7 +117,7 @@ class FeatureMap_convolution(nn.Module):
 
         # MaxPooling
         if padding_mode == 'pp-pad':
-            self.calc_padding_pooling = pppad.calc_padding(padding=1, channels=out_channels)
+            self.calc_padding_pooling = pppad.calc_padding(padding=1, in_channels=out_channels)
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)
         else:
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -161,7 +161,7 @@ class conv2DBatchNorm(nn.Module):
         super(conv2DBatchNorm, self).__init__()
         self.padding_mode = padding_mode
         if padding_mode == 'pp-pad':
-            self.calc_padding = pppad.calc_padding(padding, channels=in_channels)
+            self.calc_padding = pppad.calc_padding(padding, in_channels=in_channels)
             self.conv = nn.Conv2d(in_channels, out_channels,
                               kernel_size, stride, padding=0, dilation=dilation, bias=bias)
         elif padding_mode == 'partial':

@@ -4,10 +4,13 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import torch
+import os
 
 from utils.dataloader import DataTransform
 from models.pspnet import PSPNet
+import models.pppad_prm as prm
 
 DATASET_NCLASS = 21 # VOC: 21
 DISR_TH = 0 # threshold for disR (dissimilarity among prediction results over patches)
@@ -33,9 +36,27 @@ def segment_val(cfg):
     expanded_size = cfg['expanded_size']
     iou_data = []
     data_summary = [] #[fid, m_iou, m_iou_weighted, sum_effective_px, meanE, DisR]
-    for fid, filename in enumerate(val_data):
-    #for fid, filename in enumerate(val_data[0:3]): #debug
+    # for fid, filename in enumerate(val_data):
+    if 'sample_images' in cfg:
+        sample_image = cfg['sample_images']
+    else:
+        sample_image = val_data[0:2]
+    for fid, filename in enumerate(sample_image):
         print('---')
+
+        # to save sample patches
+        save_root_path = 'samples/' + filename + '/'
+        save_patch_path = save_root_path + 'patches/'
+        save_annotation_path = save_root_path + 'annotation/'
+        if  cfg['padding_mode'] == 'pp-pad':
+            save_inference_path = save_root_path + cfg['padding_mode'] + str(prm.REF_PPPAD[0]) + 'x' + str(prm.REF_PPPAD[1]) + '/'
+        else:
+            save_inference_path = save_root_path + cfg['padding_mode'] + '/'
+        to_save_patches, to_save_annotation, to_save_inference = [False, False, False]
+        if not os.path.exists(save_patch_path): os.makedirs(save_patch_path); to_save_patches = True
+        if not os.path.exists(save_annotation_path): os.makedirs(save_annotation_path); to_save_annotation = True
+        if not os.path.exists(save_inference_path): os.makedirs(save_inference_path); to_save_inference = True
+
         #----- 1. load image & resize ------#
         print('{0}th image:'.format(fid))
         #filename = filename.replace('\n','') # remove return code
@@ -52,14 +73,15 @@ def segment_val(cfg):
         else:
             img = img.resize((expanded_size, int((expanded_size/img_width) * img_height)))
         im_array = np.asarray(img)
-        #plt.imsave(samples/filename + '.jpg', im_array) # to confirm the image
+        #plt.imsave('samples/' + filename + '.jpg', im_array) # to confirm the image
 
         if anno_width > anno_height:
             anno = anno.resize(((int((expanded_size/anno_height) * anno_width), expanded_size)), Image.NEAREST)
         else:
             anno = anno.resize(((expanded_size ,int((expanded_size/anno_width) * anno_height))), Image.NEAREST)
         anno_array = np.asarray(anno)
-        #plt.imsave(samples/filename + '.png', anno_array) # to confirm the image
+        #plt.imsave('samples/' + filename + '.png', anno_array) # to confirm the image
+        #print(anno_array.shape)
         
         #----- 2. Instance of Preprocessing Class ------#
         transform = DataTransform(input_size=cfg['input_size'], color_mean=cfg['color_mean'], color_std=cfg['color_std'])
@@ -82,8 +104,15 @@ def segment_val(cfg):
                 #----- 3. Preprocessing ------#
                 phase = "val"
                 im_cut = Image.fromarray(np.uint8(im_array_cut))
-                # im_cut.save(samples/filename + '_patch.jpg') # to confirm the image
-                # anno_cut.save(samples/filename + '_patch.png') # to confirm the image
+
+                # to save sample patches
+                if to_save_patches == True:
+                    im_cut.save(save_patch_path + filename + '_patch' + str(py) + 'x' + str(px) + '.jpg')
+                if to_save_annotation == True:
+                    anno_cut.save(save_annotation_path + filename + '_patch' + str(py) + 'x' + str(px) + '.png')
+                palette = np.array(anno_cut.getpalette()).reshape(-1, 3) / 255.0
+                cmap = ListedColormap(palette, name="anno_cmap")
+
                 im_cut, anno_cut = transform(phase, im_cut, anno_cut)
                 
                 # # to confirm the image
@@ -91,10 +120,10 @@ def segment_val(cfg):
                 # anno_cut_path_array = anno_cut.to('cpu').detach().numpy()
                 # im_tmp = im_cut_path_array - np.min(im_cut_path_array)
                 # im_tmp = im_tmp / np.max(im_tmp)
-                # plt.imsave(samples/filename + '_patch.jpg', im_tmp) # to confirm the image
+                # plt.imsave('samples/' + filename + '_patch.jpg', im_tmp) # to confirm the image
                 # im_tmp = anno_cut_path_array - np.min(anno_cut_path_array)
                 # im_tmp = im_tmp / np.max(im_tmp)
-                # plt.imsave(samples/filename + '_patch.png', im_tmp) # to confirm the image
+                # plt.imsave('samples/' + filename + '_patch.png', im_tmp) # to confirm the image
             
                 #----- 4. Inference with PSPNet ------#
                 net.eval()
@@ -106,6 +135,10 @@ def segment_val(cfg):
                 y_org = y[0].to('cpu').detach().numpy().copy() #(21, 475, 475)
                 y_org = np.argmax(y_org, axis=0) # (475, 475) same as 'anno_cut'
                 
+                # to save sample patches
+                if to_save_inference == True:
+                    plt.imsave(save_inference_path + filename + '_patch' + str(py) + 'x' + str(px) + '.png', y_org, vmin=0, vmax=255, cmap=cmap)
+
                 # count up predicted class for each patch pixel for calculating entropy
                 for category in range(DATASET_NCLASS):
                     pred_cnt[py:py+y_org.shape[0], px:px+y_org.shape[1], category][y_org==category] += 1
@@ -166,7 +199,7 @@ def segment_val(cfg):
             else:
                 meanE = np.mean(e)
                 disR = np.sum(e > DISR_TH) / e.size
-            return meanE, disR
+            return meanE, disR, e
 
         # # calculating entroy. Prediction results of background are removed.
         # # This is not good, since miss-classification into the background class is ignored in the evaluation of translation invariance. Instead, the background class is excluded based on the annotation above.
@@ -197,7 +230,8 @@ def segment_val(cfg):
 
         # calculate entropy for evaluating translation invariance (including background class)
         cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :] # pixels with full overlapping pathces, (ph, pw) patch size
-        meanE_in, disR_in = calc_entropy(cnt_cut, exclude_background=False)
+        meanE_in, disR_in, e = calc_entropy(cnt_cut, exclude_background=False)
+        # e_img = e.reshape(cnt_cut.shape[0], cnt_cut.shape[1]); plt.imsave('e_img_' + cfg['padding_mode'] + '.png', e_img);
         print('- translation invariance')
         print('meanE (includeing background): ' + str(meanE_in))
         print('disR (includeing background): ' + str(disR_in))
@@ -205,7 +239,7 @@ def segment_val(cfg):
         # calculate entropy for evaluating translation invariance (excluding background class)
         cnt_cut = pred_cnt[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw, :] # pixels with full overlapping pathces excluding background class (0th class), (ph, pw) patch size
         annotations_cut = anno_array[ph:im_array.shape[0]-ph, pw:im_array.shape[1]-pw]
-        meanE_ex, disR_ex = calc_entropy(cnt_cut, exclude_background=True, annotations=annotations_cut)
+        meanE_ex, disR_ex, e = calc_entropy(cnt_cut, exclude_background=True, annotations=annotations_cut)
         print('meanE (excluding background): ' + str(meanE_ex))
         print('disR (excluding background): ' + str(disR_ex))
 
