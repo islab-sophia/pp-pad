@@ -72,8 +72,8 @@ The values in the following results were different from the original ICIP2023 pa
 | | Circular | 0.3062 | 0.4923 | 0.6126 |
 | Previous | CAP [19] | **0.3300** | 0.4440 | 0.5794 |
 | | Partial [17] | 0.3184 | 0.4575 | 0.5893 |
-| Proposed | PP-Pad (2x3) | 0.3203 | <u>0.4221</u> | <u>0.5443</u> |
-| | PP-Pad (2x3 conv) | <u>0.3247</u> | **0.4164** | **0.5318** |
+| Proposed | PP-Pad (2x3) | 0.3203 | <ins>0.4221</ins> | <ins>0.5443</ins> |
+| | PP-Pad (2x3 conv) | <ins>0.3247</ins> | **0.4164** | **0.5318** |
 
 [Weighted average IOU, meanE, and disR excluding background class]
 
@@ -88,8 +88,8 @@ The values in the following results were different from the original ICIP2023 pa
 | | Circular | 0.3879 | 0.6205 | 0.7593 |
 | Previous | CAP [19] | **0.4189** | 0.5419 | 0.7040 |
 | | Partial [17] | 0.4062 | 0.5900 | 0.7462 |
-| Proposed | PP-Pad (2x3) | 0.4120 |<u>0.5272</u> | <u>0.6820</u> |
-| | PP-Pad (2x3 conv) | <u>0.4171</u> | **0.5128** | **0.6613** |
+| Proposed | PP-Pad (2x3) | 0.4120 |<ins>0.5272</ins> | <ins>0.6820</ins> |
+| | PP-Pad (2x3 conv) | <ins>0.4171</ins> | **0.5128** | **0.6613** |
 
 # References
 1. Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," ICIP2023. https://arxiv.org/abs/2307.07725
