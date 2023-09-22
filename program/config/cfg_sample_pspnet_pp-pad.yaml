@@ -1,12 +1,13 @@
 # cfg_sample_pspnet_pp-pad.yaml
 
 padding_mode: 'pp-pad' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
-# Hyper-parameters for pp-pad is specified in models/pppad_prm.py
+# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
 
 # path for PSPNet.py
 dataset: './dataset/VOCdevkit/VOC2012/'
 pretrain: ['ADE', './weights/pspnet50_ADE20K.pth']
 #pretrain: ['VOC', './weights/pspnet_zeros_160.pth'] #for pp-pad, partial as pretrain model with 0 padding
+#pretrain: ['VOC', './outputs/pspnet_cap_pretrain_160.pth'] # for cap_train. weight file by cap_pretrain
 outputs: './outputs/'
 
 # training parameters

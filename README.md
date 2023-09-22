@@ -66,18 +66,16 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.3233 | 0.4536 | 0.5847 |
-| | Reflect | 0.3090 | 0.4826 | 0.6087 |
-| | Replicate | 0.3100 | 0.4745 | 0.6038 |
-| | Circular | 0.3062 | 0.4923 | 0.6126 |
-| Previous | CAP [19] | **0.3300** | 0.4440 | 0.5794 |
-| | Partial [17] | 0.3184 | 0.4575 | 0.5893 |
-| Proposed | PP-Pad (2x3) | 0.3203 | <u>0.4221</u> | **0.5443** |
-| | PP-Pad (3x3) | 0.3219 | **0.4013** | <u>0.5481</u> |
-| | PP-Pad (5x3) | 0.3278 | 0.4291 | 0.5691|
-| | PP-Pad (10x3) | 0.3270 | 0.4303 | 0.5532 |
-| | PP-Pad (3x5) | 0.3248 | 0.4361 | 0.5739 |
-| | PP-Pad (5x5) | <u>0.3286</u> | 0.4276 | 0.5536 |
+| Conventional | Zero | | | |
+| | Reflect |
+| | Replicate |
+| | Circular |
+| Previous | CAP [19] |
+| | Partial [17] |
+| Proposed | PP-Pad (2x3) | | | |
+| | PP-Pad (3x3) |
+| | PP-Pad (5x3) |
+| | PP-Pad (10x3) |
 
 [Weighted average IOU, meanE, and disR excluding background class]
 
@@ -86,18 +84,16 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.4102 | 0.5564 | 0.7088 |
-| | Reflect | 0.3941 | 0.6016 | 0.7605 |
-| | Replicate | 0.3990 | 0.5953 | 0.7565 |
-| | Circular | 0.3879 | 0.6205 | 0.7593 |
-| Previous | CAP [19] | **0.4189** | 0.5419 | 0.7040 |
-| | Partial [17] | 0.4062 | 0.5900 | 0.7462 |
-| Proposed | PP-Pad (2x3) | 0.4120 | 0.5272 | **0.6820** |
-| | PP-Pad (3x3) | 0.4119 | **0.5171** | <u>0.6886</u> |
-| | PP-Pad (5x3) | <u>0.4173</u> | 0.5392 | 0.6994 |
-| | PP-Pad (10x3) | 0.4142 | 0.5370 | 0.6924 |
-| | PP-Pad (3x5) | 0.4126 | 0.5395 | 0.6993 |
-| | PP-Pad (5x5) | 0.4137 | <u>0.5268</u> | 0.6890 |
+| Conventional | Zero | | | |
+| | Reflect |
+| | Replicate |
+| | Circular |
+| Previous | CAP [19] |
+| | Partial [17] |
+| Proposed | PP-Pad (2x3) | | | |
+| | PP-Pad (3x3) |
+| | PP-Pad (5x3) |
+| | PP-Pad (10x3) |
 
 # References
 1. Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," ICIP2023. https://arxiv.org/abs/2307.07725

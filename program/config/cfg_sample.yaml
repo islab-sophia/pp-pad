@@ -1,7 +1,7 @@
 # cfg_sample.yaml
 
 padding_mode: 'pp-pad' # 'zeros', 'reflect', 'replicate', 'circular', 'partial', 'cap_pretrain', 'cap_train' or 'pp-pad'
-# Hyper-parameters for pp-pad is specified in models/pppad_prm.py
+# Reference range for pp-pad is specified in models/pppad_prm.py: REF_PPPAD
 
 # path for PSPNet.py
 dataset: './dataset/VOCdevkit/VOC2012/'
@@ -21,7 +21,7 @@ valtrain: None #'val_100_train.csv' # path for validation data in training, whic
 
 # path for segment_val.py
 val_images: './val_100.csv'
-#weights: ['VOC', './outputs/pspnet_pp-pad_best.pth']
+#weights: ['VOC', './outputs/pspnet_pp-pad_160.pth']
 weights: ['VOC', './outputs/pspnet_pp-pad_160.pth']
 # '_best.pth' when 'valtrain' is excluding val_100 data
 # '_(num_epochs+num_epoch_offset).pth' when 'valtrain' is None, or including val_100 data.
