@@ -20,7 +20,7 @@ def get_parser():
 def segment_val(cfg):
     
     #----- Network Model ------#
-    net = PSPNet(n_classes=DATASET_NCLASS, padding_mode=cfg['padding_mode'])
+    net = PSPNet(n_classes=DATASET_NCLASS, img_size=cfg['input_size'], padding_mode=cfg['padding_mode'])
     [dataset_name, weights_file_path] = cfg['weights']
     state_dict = torch.load(weights_file_path, map_location={'cuda:0': 'cpu'})
     net.load_state_dict(state_dict)

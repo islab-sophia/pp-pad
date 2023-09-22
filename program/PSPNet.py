@@ -80,7 +80,7 @@ def train(cfg):
     [dataset_name, weights_file_path] = cfg['pretrain']
     if dataset_name == 'ADE':
         # Pretrained model with ADE20K dataset (150 Classes)
-        net = PSPNet(n_classes=DATASET_NCLASS_ADE, padding_mode=cfg['padding_mode'])
+        net = PSPNet(n_classes=DATASET_NCLASS_ADE, img_size=cfg['input_size'], padding_mode=cfg['padding_mode'])
         state_dict = torch.load(weights_file_path)
         net.load_state_dict(state_dict, strict=False)
 
@@ -100,7 +100,7 @@ def train(cfg):
         net.aux.classification.apply(weights_init)
 
     elif dataset_name == 'VOC':
-        net = PSPNet(n_classes=DATASET_NCLASS_VOC, padding_mode=cfg['padding_mode'])
+        net = PSPNet(n_classes=DATASET_NCLASS_VOC, img_size=cfg['input_size'], padding_mode=cfg['padding_mode'])
         state_dict = torch.load(weights_file_path)
         net.load_state_dict(state_dict, strict=False)
 
