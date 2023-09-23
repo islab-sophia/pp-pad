@@ -20,7 +20,7 @@ class calc_padding(nn.Module):
     def forward(self, x):
         return self.calc_ppading(x)
 
-# Implementation of pp-pad with MLP uinsg conv
+# Implementation of pp-pad with MLP using conv
 class calc_padding_pppad(nn.Module):
     def __init__(self, padding, ref = prm.REF_PPPAD, hidden_channels = 8):
         super(calc_padding_pppad, self).__init__()
