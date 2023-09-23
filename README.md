@@ -17,13 +17,18 @@ In addition to this repository, download the following files, and then place the
 Change current directory:
 > cd program
 
-For training the network:
+To train the network:
 > python PSPNet.py --cfg config/cfg_sample.yaml
 
-For evaluate the translation invarinace and classification accuracy:
+To evaluate the translation invarinace and classification accuracy:
 > python segment_val.py --cfg config/cfg_sample.yaml
 
-The results are saved in the 'outputs' directory. The filepath and other settings are specified in the config file 'config/*.yaml'.
+The results are saved in the 'program/outputs' directory. The filepath and other settings are specified in the config file 'config/*.yaml'.
+
+To save the visualized results, set the hyper-parameter 'save_patches' in the config file (.yaml) to True and then run the segment_val.py:
+> python segment_val.py --cfg config/cfg_sample.yaml
+
+Sample images can be obtained in the 'program/samples' directory.
 
 # Settings in Config (program/config)
 The yaml file can be modified in a text editor.  
@@ -56,6 +61,10 @@ sample config file: program/config/cfg_sample.yaml
 [dataset info]
 - color_mean: Mean values of images in the dataset
 - color_std: Standard deviations of images in the dataset
+
+[to save patches and visualize inference results]
+- save_patches: True / False
+- sample_images: Image files to save patches and visualize inference results
 
 # Results
 The values in the following results were different from the original ICIP2023 paper[1], especially in meanE, because there were bugs in the initial implementation for calculating meanE. The following is the results obatained by the current code. The network was trained in 320 epoches.

@@ -31,3 +31,7 @@ patch_stride: 47
 # dataset info
 color_mean: [0.485, 0.456, 0.406]
 color_std: [0.229, 0.224, 0.225]
+
+# to save patches and visualize inference results.
+save_patches: False
+sample_images: ['2011_001005', '2008_003926', '2007_001457', '2007_001733', '2009_004942', '2011_001069', '2010_001908']
