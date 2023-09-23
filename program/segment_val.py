@@ -54,7 +54,7 @@ def segment_val(cfg):
                 save_patch_path = save_root_path + 'patches/'
                 save_annotation_path = save_root_path + 'annotation/'
                 if  cfg['padding_mode'] == 'pp-pad':
-                    save_inference_path = save_root_path + cfg['padding_mode'] + str(prm.REF_PPPAD[0]) + 'x' + str(prm.REF_PPPAD[1]) + '/'
+                    save_inference_path = save_root_path + cfg['padding_mode'] + str(prm.REF_PPPAD[0]) + 'x' + str(prm.REF_PPPAD[1]) + prm.ARCH + '/'
                 else:
                     save_inference_path = save_root_path + cfg['padding_mode'] + '/'
                 to_save_patches, to_save_annotation, to_save_inference = [False, False, False]
