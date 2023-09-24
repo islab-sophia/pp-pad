@@ -107,7 +107,7 @@ The values in the following results were different from the original ICIP2023 pa
 4. Guilin Liu, Kevin J. Shih, Ting-Chun Wang, Fitsum A. Reda, Karan Sapra, Zhiding Yu, Andrew Tao, and Bryan Catanzaro, "Partial Convolution based Padding," arXiv 2018. https://arxiv.org/abs/1811.11718
 
 # Versions
-The codes were confired with the following versions.
+The codes were confirmed with the following versions.
 - Python 3.7.13
 - Pytorch 1.13.0+cu117
 - NVIDIA Driver 510.108.03
