@@ -1,3 +1,6 @@
+# pppad_ver1.py
+# including ARCH = 'conv' and 'pppad'
+
 import torch
 import torch.nn as nn
 import models.pppad_prm as prm
