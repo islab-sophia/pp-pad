@@ -3,7 +3,7 @@ This repository contains the pytorch implementation of pp-pad (peripheral predic
 
 - Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," International Conference on Image Processing (ICIP), 2023, Kuala Lumpur, Malaysia. [arXiv https://arxiv.org/abs/2307.07725]
 
-![outline of pp-pad](samples/outline_pp-pad.png)
+![outline of pp-pad](samples/pp-pad_sample_images.png)
 
 # Downloads
 In addition to this repository, download the following files, and then place them under the pp-pad folders.
