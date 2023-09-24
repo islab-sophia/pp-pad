@@ -75,7 +75,7 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.3233 | 0.4536 | 0.5847 |
+| Conventional | Zero | 0.3193 | 0.4315 | 0.5721 |
 | | Reflect | 0.3090 | 0.4826 | 0.6087 |
 | | Replicate | 0.3100 | 0.4745 | 0.6038 |
 | | Circular | 0.3062 | 0.4923 | 0.6126 |
@@ -91,7 +91,7 @@ The values in the following results were different from the original ICIP2023 pa
 
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.4102 | 0.5564 | 0.7088 |
+| Conventional | Zero | 0.4104 | 0.5397 | 0.6997 |
 | | Reflect | 0.3941 | 0.6016 | 0.7605 |
 | | Replicate | 0.3990 | 0.5953 | 0.7565 |
 | | Circular | 0.3879 | 0.6205 | 0.7593 |
