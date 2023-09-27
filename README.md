@@ -73,32 +73,47 @@ The values in the following results were different from the original ICIP2023 pa
 - mIoU is simple mean of IoU, but not weighted average. The background class was excluded in the calculation of IoU.
 - meanE and disR were calculated including background class.
 
+Patch Size: 475x475
 | | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.3193 | 0.4315 | 0.5721 |
+| Conventional | Zero | 0.3233 | 0.4536 | 0.5847 |
 | | Reflect | 0.3090 | 0.4826 | 0.6087 |
 | | Replicate | 0.3100 | 0.4745 | 0.6038 |
 | | Circular | 0.3062 | 0.4923 | 0.6126 |
-| Previous | CAP [19] | **0.3300** | 0.4440 | 0.5794 |
-| | Partial [17] | 0.3184 | 0.4575 | 0.5893 |
-| Proposed | PP-Pad (2x3) | 0.3203 | <ins>0.4221</ins> | <ins>0.5443</ins> |
-| | PP-Pad (2x3 conv) | <ins>0.3255</ins> | **0.4195** | **0.5423** |
+| Previous | Partial [17] | 0.3184 | 0.4575 | 0.5893 |
+| Proposed | PP-Pad (2x3) | 0.3203 | 0.4221 | 0.5443 |
+| | PP-Pad (2x3 conv) | **0.3255** | **0.4195** | **0.5423** |
+
+Patch Size: 512x512
+| | Methods | mIoU &uarr; | meanE_in &darr;| disR_in &darr; |
+| ---- | ---- | ---- | ---- | ---- |
+| Previous | CAP [19] | 0.3300 | 0.4440 | 0.5794 |
+| Proposed | PP-Pad (2x3) | 0.3301 | 0.4315 | 0.5533 |
+| | PP-Pad (2x3 conv) | **0.3307** | **0.4238** | **0.5505** |
+
 
 [Weighted average IOU, meanE, and disR excluding background class]
 
 - Weighted average version of mIoU (mIoU_weighted). Each patch was weighted by the number of effective pixels. 'effective' means that union of predicted area and ground-truth area is not zero in at least one class when (excluding the background class) calculating IoU for each patch. By weighting, patches filled with the background can be less contributed to mIoU, since the background class was excluded in mIoU calculations.
 - meanE & disR excluding the background class in annotation (meanE_ex, disR_ex)
 
+Patch Size: 475x475
 | | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
 | ---- | ---- | ---- | ---- | ---- |
-| Conventional | Zero | 0.4104 | 0.5397 | 0.6997 |
+| Conventional | Zero | 0.4102 | 0.5564 | 0.7088 |
 | | Reflect | 0.3941 | 0.6016 | 0.7605 |
 | | Replicate | 0.3990 | 0.5953 | 0.7565 |
 | | Circular | 0.3879 | 0.6205 | 0.7593 |
-| Previous | CAP [19] | **0.4189** | 0.5419 | 0.7040 |
-| | Partial [17] | 0.4062 | 0.5900 | 0.7462 |
-| Proposed | PP-Pad (2x3) | 0.4120 |<ins>0.5272</ins> | <ins>0.6820</ins> |
-| | PP-Pad (2x3 conv) | <ins>0.4182</ins> | **0.5118** | **0.6745** |
+| Previous | Partial [17] | 0.4062 | 0.5900 | 0.7462 |
+| Proposed | PP-Pad (2x3) | 0.4120 | 0.5272 | 0.6820 |
+| | PP-Pad (2x3 conv) | **0.4182** | **0.5118** | **0.6745** |
+
+Patch Size: 512x512
+| | Methods | mIoU_weighted &uarr; | meanE_ex &darr; | disR_ex &darr; |
+| ---- | ---- | ---- | ---- | ---- |
+| Previous | CAP [19] | 0.4189 | 0.5419 | 0.7040 |
+| Proposed | PP-Pad (2x3) | 0.4258 | 0.5370 | 0.6932 |
+| | PP-Pad (2x3 conv) | **0.4295** | **0.5213** | **0.6827** |
 
 # References
 1. Kensuke Mukai and Takao Yamanaka, "Improving Translation Invariance in Convolutional Neural Networks with Peripheral Prediction Padding," ICIP2023. https://arxiv.org/abs/2307.07725
