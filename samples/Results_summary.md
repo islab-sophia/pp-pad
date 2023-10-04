@@ -1,8 +1,15 @@
 # Qualitative Comparison
 
+<img src="PASCAL_VOC_colorbar.png" width="100">
+
+[](
+    ![PASCAL_VOC_colorbar](PASCAL_VOC_colorbar.png)
+)
+
 ## The examples that PP-Pad was better than other padding methods
 
 2010_001908
+
 ![Results_2010_001908](Results_2010_001908.png)
 
 2010_002792 / 2010_005159
