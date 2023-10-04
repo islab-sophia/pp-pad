@@ -5,7 +5,7 @@ This repository contains the pytorch implementation of pp-pad (peripheral predic
 
 ![outline of pp-pad](samples/pp-pad_sample_images.png)
 
-More qualitative comparison: [samples/Results_summary.md](https://github.com/islab-sophia/pp-pad/blob/main/samples/Results_summary.md)
+More qualitative comparison: [Results_summary.md](https://github.com/islab-sophia/pp-pad/blob/main/Results_summary.md)
 
 # Downloads
 In addition to this repository, download the following files, and then place them under the pp-pad folders.
