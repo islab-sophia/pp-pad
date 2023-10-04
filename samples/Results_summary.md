@@ -15,6 +15,6 @@
 
 ![Results_2009_004942](Results_2009_004942.png)
 
-## The examples that Patial (previous method) was better than other padding methods
+## The examples that CAP (previous method) was better than other padding methods
 
 ![Results_2008_006159and2007_009750](Results_2008_006159and2007_009750.png)
