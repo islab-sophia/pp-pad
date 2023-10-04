@@ -22,7 +22,7 @@
 ![Results_2009_001300](Results_2009_001300.png)
 
 
-## The examples that Patial (previous method) was better than other padding methods
+## The examples that Partial (previous method) was better than other padding methods
 
 2009_004942
 ![Results_2009_004942](Results_2009_004942.png)
